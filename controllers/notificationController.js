@@ -1,16 +1,57 @@
+// const Notification = require('../models/Notification');
+// const { sendToQueue } = require('../producers/notificationProducer');
+
+// exports.sendNotification = async (req, res) => {
+//   const { userId, type, message } = req.body;
+//   const notification = await Notification.create({ userId, type, message });
+
+//   await sendToQueue(notification);
+
+//   res.status(201).json({ message: 'Notification queued', notification });
+// };
+
+// exports.getUserNotifications = async (req, res) => {
+//   const notifications = await Notification.find({ userId: req.params.id });
+//   res.json(notifications);
+// };
+
+
 const Notification = require('../models/Notification');
-const { sendToQueue } = require('../producers/notificationProducer');
 
+// POST /api/notifications
 exports.sendNotification = async (req, res) => {
-  const { userId, type, message } = req.body;
-  const notification = await Notification.create({ userId, type, message });
+  try {
+    const { userId, type, message, email, phone } = req.body;
 
-  await sendToQueue(notification);
+    if (!userId || !type || !message) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-  res.status(201).json({ message: 'Notification queued', notification });
+    if (type === 'email' && !email) {
+      return res.status(400).json({ error: 'Email is required for email notification' });
+    }
+
+    if (type === 'sms' && !phone) {
+      return res.status(400).json({ error: 'Phone number is required for SMS notification' });
+    }
+
+    const notification = new Notification({ userId, type, message, email, phone });
+    await notification.save();
+
+    res.status(201).json({ message: 'Notification sent successfully', data: notification });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send notification' });
+  }
 };
 
+// GET /api/users/:id/notifications
 exports.getUserNotifications = async (req, res) => {
-  const notifications = await Notification.find({ userId: req.params.id });
-  res.json(notifications);
+  try {
+    const userId = req.params.id;
+    const notifications = await Notification.find({ userId });
+
+    res.status(200).json({ notifications });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
 };
