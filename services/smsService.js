@@ -5,8 +5,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
 exports.sendSMS = async ({ userId, message }) => {
-  // Replace with actual user phone lookup logic if available
-  const phoneNumber = '+91' + userId; // dummy assumption
+  const phoneNumber = '+91' + userId; 
 
   await client.messages.create({
     body: message,
